@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <p>company hydration station</p>
+    <br>
+    <div id="workplace">
+        <pre>
+  _______     
+ (       )     
+ |~~~<a id="bubble5"> </a>~~~|   
+ (   <a id="bubble4"> </a>   )   
+ |   <a id="bubble3"> </a>   |
+ (   <a id="bubble2"> </a>   )  
+  \__<a id="bubble1"> </a>__/  ___ 
+ /```````\|   |
+| _______ | c |
+| |  -  | | u |
+| |  Y  | | p |
+| |     | | s |
+| |=====| |___|
+|         |\_/ 
+|         |    
+|         |    
+|         |    
+|         |    
+|         |    
+|         |    
+ \_______/     
+
+        </pre>
+    </div>
+</body>
+<script type="module">
+
+    // BUBBLES //
+    // reference bubbles
+    let bubbles = [
+        document.getElementById("bubble1"),
+        document.getElementById("bubble2"),
+        document.getElementById("bubble3"),
+        document.getElementById("bubble4"),
+        document.getElementById("bubble5")
+    ];
+    // current bubble equal to last in array
+    let currentBubble = bubbles.length - 1;
+
+    // cycle bubbles every 0.5 seconds
+    setInterval(updateBubbles, 500);
+
+    // update bubbles
+    function updateBubbles() {
+        for (let i = 0; i < bubbles.length; i++) {
+            bubbles[i].textContent = ".";
+        }
+        bubbles[currentBubble].textContent = " ";
+        currentBubble--;
+        if (currentBubble < 0) {
+            currentBubble = bubbles.length - 1;
+        }
+    }
+
+    // PLAYHTML STUFF
+    // import library
+    import { playhtml } from 'https://unpkg.com/playhtml';
+    // initialise
+    let bubble;
+    
+    playhtml.init({
+        developmentMode: true, 
+        cursors: {
+            // enable cursors
+            enabled: true,
+            // custom cursor render
+            onCustomCursorRender(connectionId, cursorElement) {
+                // create wrapper canvas
+                const wrapper = document.createElement("div");
+                wrapper.className = "cursorWrapper";
+                // must create new cursor
+                const cursor = document.createElement("div");
+                cursor.classList.add("cursorArrow");
+                cursor.textContent = ":)"; 
+                // create speech bubble that follows cursor
+                bubble = document.createElement("div");
+                bubble.classList.add("speechBubble");
+                // hide at first, but toggle when in use
+                bubble.classList.add("hide");
+                bubble.textContent = "";
+                // append elements to wrapper
+                wrapper.appendChild(cursor);
+                wrapper.appendChild(bubble);
+                return wrapper;
+            }
+        }
+    });
+
+    // MOUSE elements
+    const myBubble = document.createElement("div");
+    myBubble.classList.add("speechBubble");
+    myBubble.classList.add("hide");
+    myBubble.setAttribute("can-mirror", "")
+    document.body.appendChild(myBubble);
+
+    window.addEventListener("mousemove", function(e) {
+        myBubble.style.left = (e.clientX + 20) + "px";
+        myBubble.style.top = (e.clientY - 25) + "px";
+    });
+
+    // SELECT CONVERSATION
+    const phrases = 
+        [
+            "hey, buddy",
+            "working hard or hardly working?",
+            "thirsty work, huh?",
+            "case of the monday-itis?",
+            "catch the game last night?",
+            "after you, pal",
+            "*burps*",
+        ]
+
+    // add event listener for any click
+    window.addEventListener("click", updateChoiceTree);
+
+    // monitor click locations
+    let interactingWithWindow = false;
+    let interactingWithMenu = false;
+    let textPresent = false;
+
+    // upon click update choices (e = eventLocation)
+    function updateChoiceTree(e) {
+        // state 1 (no menu, no speech)
+        if (interactingWithWindow == false && 
+            interactingWithMenu == false &&
+            textPresent == false) {
+            showPath1(e);
+            interactingWithWindow = true;
+        }
+        // state 2 (menu, but clicking outside)
+        else if (interactingWithWindow == true && 
+                interactingWithMenu == false) {
+            path1.remove();
+            interactingWithWindow = false;
+        }
+        // state 3 (menu, clicking menu)
+        else if (interactingWithWindow == true && 
+                interactingWithMenu == true) {
+            path1.remove();
+            interactingWithWindow = false; 
+            interactingWithMenu = false;  
+            textPresent = true;
+        }
+        // state 4 (no menu, speech)
+        else if (interactingWithWindow == false && 
+            interactingWithMenu == false &&
+            textPresent == true) {
+                myBubble.classList.toggle("hide");
+                textPresent = false;
+            }
+    }
+
+    // show main conversation topics
+    let path1;
+    function showPath1(e) {
+        console.log("path1");
+        console.log(e);
+        // create div
+        path1 = document.createElement("div");
+        path1.classList.add("list");
+        let topics = phrases;
+        // find longest choice, so we can make window as wide as that
+        let currentLongestChoice = topics[0];
+        for (let i = 0; i < topics.length; i++) {
+            if (topics[i].length > currentLongestChoice.length) {
+                currentLongestChoice = topics[i];
+            }
+        }
+        let maxWidth = currentLongestChoice.length * 8.5;
+
+        // append options to div
+        let newPath;
+        for (let i = 0; i < topics.length; i++) {
+            const newOption = document.createElement("button");
+            newOption.classList.add("options");
+            newOption.textContent = topics[i];
+            // IMPORTANT: add event listener --> on hover show other paths
+            newOption.addEventListener("click", function(event) {
+                interactingWithMenu = true;
+                updateSpeech(this.textContent);
+                // event.stopPropagation();
+                // updateSpeech(this.textContent);
+                // path1.remove();
+            });
+            
+            // append to parent
+            path1.appendChild(newOption);
+        }
+        // make window as wide as predetermined maxWidth
+        path1.style.width = maxWidth;
+        // peg div to mouse at start
+        path1.style.left = (e.clientX) + "px";
+        path1.style.top = (e.clientY) + "px";
+        document.body.appendChild(path1);
+        path1.addEventListener("mouseleave", function() {
+            // path1.remove();
+        });
+    }
+
+    function updateSpeech(text) {
+        textPresent = true;
+        myBubble.classList.toggle("hide");
+        myBubble.textContent = text;
+    }
+
+</script>
+    
+</html>
+
+<style>
+/* GENERAL STUFF */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: monospace;
+}
+body {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+/* NON-USER CURSOR STUFF */
+.cursorArrow {
+    font-size: 12px;
+}
+.speechBubble {
+    position: absolute;
+    left: 10px;
+    top: -15px;
+    background: white;
+    border: 1.3px solid black;
+    padding: 4px 8px;
+    white-space: nowrap;
+}
+.hide {
+    display: none;
+}
+
+/* USER CURSOR STUFF */
+.myCursorArrow {
+    font-size: 12px;
+}
+.mySpeechBubble {
+    padding-block: absolute;
+    left: 10px;
+    top: -15px;
+    background: white;
+    border: 1.3px solid black;
+    /* padding: 4px 8px; */
+    white-space: nowrap;
+}
+/* SPEECH STUFF */
+.list {
+    position: absolute;
+    background: white;
+    border: 1.3px solid black;
+    display: flex;
+    flex-direction: column;
+}
+.listItems {
+    border: 1.3px solid lime;
+}
+.listItems:hover {
+    background-color: yellow;
+}
+button {
+    height: 20px;
+    border: 1.3px solid black;
+    background-color: white;
+}
+button:hover {
+    background-color: lightgray;
+}
+</style>
+
+<script>
+    
+</script>
